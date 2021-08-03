@@ -1,78 +1,125 @@
-# javascript-action-template
+# process-postman-test-results
 
-This template can be used to quickly start a new custom js action repository.  Click the `Use this template` button at the top to get started.
+This action works in conjunction with another step that runs Postman tests.  That step should include a json reporter like the following npm script: 
+`"postman": "newman run postman_collection.json -r cli,json -reporter-json-export postman-results.json"`.  
 
-## TODOs
-- Readme
-  - [ ] Update the Inputs section with the correct action inputs
-  - [ ] Update the Outputs section with the correct action outputs
-  - [ ] Update the Example section with the correct usage   
-- package.json
-  - [ ] Update the `name` with the new action value
-- main.js
-  - [ ] Implement your custom javascript action
-- action.yml
-  - [ ] Fill in the correct name, description, inputs and outputs
-- .prettierrc.json
-  - [ ] Update any preferences you might have
-- CODEOWNERS
-  - [ ] Update as appropriate
-- Repository Settings
-  - [ ] On the *Options* tab check the box to *Automatically delete head branches*
-  - [ ] On the *Options* tab update the repository's visibility (must be done by an org owner)
-  - [ ] On the *Branches* tab add a branch protection rule
-    - [ ] Check *Require pull request reviews before merging*
-    - [ ] Check *Dismiss stale pull request approvals when new commits are pushed*
-    - [ ] Check *Require review from Code Owners*
-    - [ ] Check *Include Administrators*
-  - [ ] On the *Manage Access* tab add the appropriate groups
-- About Section (accessed on the main page of the repo, click the gear icon to edit)
-  - [ ] The repo should have a short description of what it is for
-  - [ ] Add one of the following topic tags:
-    | Topic Tag       | Usage                                    |
-    | --------------- | ---------------------------------------- |
-    | az              | For actions related to Azure             |
-    | code            | For actions related to building code     |
-    | certs           | For actions related to certificates      |
-    | db              | For actions related to databases         |
-    | git             | For actions related to Git               |
-    | iis             | For actions related to IIS               |
-    | microsoft-teams | For actions related to Microsoft Teams   |
-    | svc             | For actions related to Windows Services  |
-    | jira            | For actions related to Jira              |
-    | meta            | For actions related to running workflows |
-    | pagerduty       | For actions related to PagerDuty         |
-    | test            | For actions related to testing           |
-    | tf              | For actions related to Terraform         |
-  - [ ] Add any additional topics for an action if they apply    
-    
+This action takes the json file and creates a Status Check or PR Comment depending on the flags set with the test outcome.  This action does not execute the tests itself, it relies on a previous step to run the Postman tests.  It can only process one result file.
+
+
+* [Failures](#failures)
+* [Limitations](#limitations)
+* [Action Outputs](#action-outputs)
+* [Inputs](#inputs)
+* [Outputs](#outputs)
+* [Usage Examples](#usage-examples)
+* [Recompiling](#recompiling)
+
+## Failures
+The status check can be an item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge shown in the comment or status check body will still indicate a failure.
+
+## Limitations
+GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment.  This action will fail if the test results exceed the GitHub limit.  To mitigate this size issue only failed tests are included in the output.
+
+If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit.  The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
+
+## Action Outputs
+### Pull Request Comment
+This is shown on the pull request when the `create-pr-comment` is set to `true` and there is a PR associated with the commit.
+<kbd><img src="./docs/pr_comment.png"></img></kbd>
+
+### Pull Request Status Check
+This is shown on the pull request when the `create-status-check` is set to `true` and there is a PR associated with the commit.
+<kbd><img src="./docs/pr_status_check.png"></img></kbd>
+
+### Workflow Run
+This is shown on the workflow run when the `create-status-check` is set to `true`.
+<kbd><img src="./docs/workflow_status_check.png"></img></kbd>
+
+### Failed Test Details
+For failed test runs you can expand each failure to view more details.
+<kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
-| Parameter | Is Required | Default | Description           |
-| --------- | ----------- | ------- | --------------------- |
-| `input-1` | true        |         | Description goes here |
-| `input-2` | false       |         | Description goes here |
+| Parameter              | Is Required | Default              | Description                                                                                                             |
+| ---------------------- | ----------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `github-token`         | true        | N/A                  | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
+| `results-file`         | true        | N/A                  | The json test results file generated by the postman/newman json reporter.                                               |
+| `report-name`          | false       | Postman Test Results | The desired name of the report that is shown on the PR Comment and inside the Status Check.                             |
+| `create-status-check`  | false       | true                 | Flag indicating whether a status check with postman test results should be generated.                                   |
+| `create-pr-comment`    | false       | true                 | Flag indicating whether a PR comment with postman test results should be generated.                                     |
+| `ignore-test-failures` | false       | `false`              | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
+| `timezone`             | false       | `UTC`                | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
+
 
 ## Outputs
-| Output     | Description           |
-| ---------- | --------------------- |
-| `output-1` | Description goes here |
+| Output         | Description                                                                                                                                                           |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test-outcome` | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
 
-## Example
+## Usage Examples
+### npm setup
+1. Some npm scripts have also been added to the project
+    ```json
+    "scripts": {
+      "postman": "newman run postman_collection.json -r cli,json -reporter-json-export postman-results.json"
+    }
+    ```
+
+### Workflow
 
 ```yml
-# TODO: Fill in the correct usage
+env:
+  PACKAGE_JSON_DIR: 'src'                       # The directory containing package.json
+  POSTMAN_NPM_SCRIPT_NAME: 'postman'            # The name of the postman script in package.json
+  POSTMAN_RESULTS_NAME: 'postman-results.json'  # The name of the results file set in npm script in package.json
+
 jobs:
-  job1:
-    runs-on: [self-hosted, ubuntu-20.04]
+  run-postman:
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ env.PACKAGE_JSON_DIR }}
+
     steps:
       - uses: actions/checkout@v2
 
-      - name: Add Step Here
-        uses: im-open/this-repo@v1.0.0
+      - name: Restore npm packages
+        run: npm install
+
+      - name: Run Postman Tests
+        continue-on-error: true
+        run: npm run ${{ env.POSTMAN_NPM_SCRIPT_NAME }}
+
+      - name: Create Status check based on postman results
+        id: process-postman
+        uses: im-open/process-postman-test-results@initial-action
         with:
-          input-1: 'abc'
-          input-2: '123
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          results-file: ${{env.PACKAGE_JSON_DIR }}/${{ env.POSTMAN_RESULTS_NAME }}
+          create-status-check: true
+          create-pr-comment: true
+          ignore-test-failures: false
+          timezone: 'america/denver'
+        
+      - name: Create Status check based on postman results
+        id: process-postman
+        uses: im-open/process-postman-test-results@v1.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          results-file: ${{env.PACKAGE_JSON_DIR }}/${{ env.POSTMAN_RESULTS_NAME }}
+          report-name: 'Postman ${{ github.run_number }}'     # Default: Postman Test Results
+          create-status-check: true                           # Default: true
+          create-pr-comment: false                            # Default: true
+          ignore-test-failures: true                          # Default: false
+          timezone: 'america/denver'                          # Default: UTC
+      
+      - name: Fail if there were errors in the postman tests
+        if: steps.process-postman.outputs.test-outcome == 'Failed'
+        run: |
+          echo "There were postman failures."
+          exit 1
 ```
 
 ## Recompiling
@@ -97,3 +144,6 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 ## License
 
 Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+
+[limit]: https://github.com/github/docs/issues/3765
+[Only GitHub apps]: https://docs.github.com/en/rest/reference/checks#check-suites
