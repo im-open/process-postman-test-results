@@ -3,7 +3,7 @@
 This action works in conjunction with another step that runs Postman tests.  That step should include a json reporter like the following npm script: 
 `"postman": "newman run postman_collection.json -r cli,json -reporter-json-export postman-results.json"`.  
 
-This action takes the json file and creates a Status Check or PR Comment depending on the flags set with the test outcome.  This action does not use the execute the tests itself, it relies on a previous step to run the Postman tests.  It can only process one result file.
+This action takes the json file and creates a Status Check or PR Comment depending on the flags set with the test outcome.  This action does not execute the tests itself, it relies on a previous step to run the Postman tests.  It can only process one result file.
 
 
 * [Failures](#failures)
@@ -15,7 +15,7 @@ This action takes the json file and creates a Status Check or PR Comment dependi
 * [Recompiling](#recompiling)
 
 ## Failures
-The status check can be seen as a new item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a failure though.
+The status check can be an item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge shown in the comment or status check body will still indicate a failure.
 
 ## Limitations
 GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment.  This action will fail if the test results exceed the GitHub limit.  To mitigate this size issue only failed tests are included in the output.
