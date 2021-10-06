@@ -128,6 +128,17 @@ npm run bundle
 These commands utilize [esbuild](https://esbuild.github.io/getting-started/#bundling-for-node) to bundle the action and
 its dependencies into a single file located in the `dist` folder.
 
+## Incrementing the Version
+
+This action uses [git-version-lite] to examine commit messages to determine whether to perform a major, minor or patch increment on merge.  The following table provides the fragment that should be included in a commit message to active different increment strategies.
+| Increment Type | Commit Message Fragment                     |
+| -------------- | ------------------------------------------- |
+| major          | +semver:breaking                            |
+| major          | +semver:major                               |
+| minor          | +semver:feature                             |
+| minor          | +semver:minor                               |
+| patch          | *default increment type, no comment needed* |
+
 ## Code of Conduct
 
 This project has adopted the [im-open's Code of Conduct](https://github.com/im-open/.github/blob/master/CODE_OF_CONDUCT.md).
@@ -138,3 +149,4 @@ Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license]
 
 [limit]: https://github.com/github/docs/issues/3765
 [Only GitHub apps]: https://docs.github.com/en/rest/reference/checks#check-suites
+[git-version-lite]: https://github.com/im-open/git-version-lite
