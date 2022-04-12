@@ -10,7 +10,7 @@ ${getBadge(jsonResults.stats.requests, 'Requests')}
 ${getBadge(jsonResults.stats.assertions, 'Assertions')}
 ${getTestTimes(jsonResults.timings)}
 ${getTestCounters(jsonResults)}
-${getTestResultsMarkup(jsonResults.failures)}
+${getTestResultsMarkup(jsonResults.failures, reportName)}
   `;
 }
 
@@ -19,7 +19,7 @@ function getBadge(stats, name) {
   const totalCount = stats.total;
   const passedCount = totalCount - failedCount;
 
-  const badgeCountText = failedCount > 0 ? `${`${failedCount}/${totalCount}`}` : `${`${passedCount}/${totalCount}`}`;
+  const badgeCountText = failedCount > 0 ? `${failedCount}/${totalCount}` : `${passedCount}/${totalCount}`;
   const badgeStatusText = failedCount > 0 ? 'FAILED' : 'PASSED';
   const badgeColor = failedCount > 0 ? 'red' : 'brightgreen';
 
