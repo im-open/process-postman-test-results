@@ -95,7 +95,7 @@ jobs:
         working-directory: ${{ env.PACKAGE_JSON_DIR }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Restore npm packages
         run: npm install
