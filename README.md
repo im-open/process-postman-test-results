@@ -1,6 +1,6 @@
 # process-postman-test-results
 
-This action works in conjunction with another step that runs Postman tests.  That step should include a json reporter like the following npm script: 
+This action works in conjunction with another step that runs Postman tests.  That step should include a json reporter like the following npm script:
 `"postman": "newman run postman_collection.json -r cli,json -reporter-json-export postman-results.json"`.  
 
 This action takes the json file and creates a Status Check or PR Comment depending on the flags set with the test outcome.  This action does not execute the tests itself, it relies on a previous step to run the Postman tests.  It can only process one result file.
@@ -20,37 +20,45 @@ This action takes the json file and creates a Status Check or PR Comment dependi
   - [npm setup](#npm-setup)
   - [Workflow](#workflow)
 - [Contributing](#contributing)
-  - [Recompiling](#recompiling)
+  - [Recompiling](#recompiling-manually)
   - [Incrementing the Version](#incrementing-the-version)
 - [Code of Conduct](#code-of-conduct)
 - [License](#license)
 
 ## Failures
+
 The status check can be an item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge shown in the comment or status check body will still indicate a failure.
 
 ## Limitations
+
 GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment.  This action will fail if the test results exceed the GitHub limit.  To mitigate this size issue only failed tests are included in the output.
 
 If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit.  The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
 
 ## Action Outputs
+
 ### Pull Request Comment
+
 This is shown on the pull request when the `create-pr-comment` is set to `true` and there is a PR associated with the commit.
 <kbd><img src="./docs/pr_comment.png"></img></kbd>
 
 ### Pull Request Status Check
+
 This is shown on the pull request when the `create-status-check` is set to `true` and there is a PR associated with the commit.
 <kbd><img src="./docs/pr_status_check.png"></img></kbd>
 
 ### Workflow Run
+
 This is shown on the workflow run when the `create-status-check` is set to `true`.
 <kbd><img src="./docs/workflow_status_check.png"></img></kbd>
 
 ### Failed Test Details
+
 For failed test runs you can expand each failure to view more details.
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
+
 | Parameter                      | Is Required | Default              | Description                                                                                                                                                                         |
 | ------------------------------ | ----------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github-token`                 | true        | N/A                  | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                                                                                          |
@@ -62,15 +70,18 @@ For failed test runs you can expand each failure to view more details.
 | `ignore-test-failures`         | false       | `false`              | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
 
-
 ## Outputs
+
 | Output         | Description                                                                                                                                                           |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `test-outcome` | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
 
 ## Usage Examples
+
 ### npm setup
+
 1. Some npm scripts have also been added to the project
+
     ```json
     "scripts": {
       "postman": "newman run postman_collection.json -r cli,json -reporter-json-export postman-results.json"
@@ -106,7 +117,8 @@ jobs:
 
       - name: Create Status check based on postman results
         id: process-postman
-        uses: im-open/process-postman-test-results@v2.1.3
+        # You may also reference the major or major.minor version
+        uses: im-open/process-postman-test-results@v2.1.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           results-file: ${{env.PACKAGE_JSON_DIR }}/${{ env.POSTMAN_RESULTS_NAME }}
@@ -177,6 +189,4 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 
 Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
 
-[limit]: https://github.com/github/docs/issues/3765
-[Only GitHub apps]: https://docs.github.com/en/rest/reference/checks#check-suites
 [git-version-lite]: https://github.com/im-open/git-version-lite
