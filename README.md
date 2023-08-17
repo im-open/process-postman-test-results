@@ -118,7 +118,7 @@ jobs:
       - name: Create Status check based on postman results
         id: process-postman
         # You may also reference the major or major.minor version
-        uses: im-open/process-postman-test-results@v2.1.4
+        uses: im-open/process-postman-test-results@v2.1.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           results-file: ${{env.PACKAGE_JSON_DIR }}/${{ env.POSTMAN_RESULTS_NAME }}
