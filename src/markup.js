@@ -35,6 +35,26 @@ function formatDate(dateToFormat) {
   }
 }
 
+function getEntryValue(value) {
+  let valueArray = Array.isArray(value) ? value : [value];
+  const [val, wrapper] = valueArray;
+  if (!val) return '';
+
+  return wrapper ? `<${wrapper}>${val}</${wrapper}>` : val;
+}
+
+function getTableEntry(title, ...values) {
+  const tableValues = values.map(getEntryValue);
+  if (!tableValues.some(val => val)) return '';
+
+  return `
+<tr>
+  <th>${title}</th>
+  ${tableValues.map(val => `<td>${val}</td>`).join('')}
+</tr>
+`;
+}
+
 function getTestTimes(timings) {
   const startDate = new Date(timings.started);
   const endDate = new Date(timings.completed);
@@ -43,33 +63,15 @@ function getTestTimes(timings) {
   });
 
   return `
-<details>  
+<details>
   <summary> Duration: ${duration} </summary>
   <table>
-    <tr>
-      <th>Start:</th>
-      <td><code>${formatDate(startDate)}</code></td>
-    </tr>
-    <tr>
-      <th>Finish:</th>
-      <td><code>${formatDate(endDate)}</code></td>    
-    </tr>
-    <tr>
-      <th>Duration:</th>
-      <td><code>${(timings.completed - timings.started) / 1000}</code></td>
-    </tr>
-    <tr>
-      <th>Response Time Average:</th>
-      <td><code>${timings.responseAverage}</code></td>
-    </tr>
-    <tr>
-      <th>Response Time Min:</th>
-      <td><code>${timings.responseMin}</code></td>
-    </tr>
-    <tr>
-      <th>Response Time Max:</th>
-      <td><code>${timings.responseMax}</code></td>
-    </tr>
+    ${getTableEntry('Start:', [formatDate(startDate), 'code'])}
+    ${getTableEntry('Finish:', [formatDate(endDate), 'code'])}
+    ${getTableEntry('Duration:', [`${(timings.completed - timings.started) / 1000}`, 'code'])}
+    ${getTableEntry('Response Time Average:', [timings?.responseAverage, 'code'])}
+    ${getTableEntry('Response Time Min:', [timings?.responseMin, 'code'])}
+    ${getTableEntry('Response Time Max:', [timings?.responseMax, 'code'])}
   </table>
 </details>
   `;
@@ -86,31 +88,11 @@ function getTestCounters(run) {
       <th>executed</th>
       <td>failed</td>
     </tr>
-    <tr>
-      <th>iterations</th>
-      <td>${stats.iterations.total}</td>
-      <td>${stats.iterations.failed}</td>
-    </tr>
-    <tr>
-      <th>requests</th>
-      <td>${stats.requests.total}</td>
-      <td>${stats.requests.failed}</td>
-    </tr>
-    <tr>
-      <th>test-scripts</th>
-      <td>${stats.testScripts.total}</td>
-      <td>${stats.testScripts.failed}</td>
-    </tr>
-    <tr>
-      <th>prerequest-scripts</th>
-      <td>${stats.prerequestScripts.total}</td>
-      <td>${stats.prerequestScripts.failed}</td>
-    </tr>
-    <tr>
-      <th>assertions</th>
-      <td>${stats.assertions.total}</td>
-      <td>${stats.assertions.failed}</td>
-    </tr>
+    ${getTableEntry('iterations', stats?.iterations?.total, stats?.iterations?.failed)}
+    ${getTableEntry('requests', stats?.requests?.total, stats?.requests?.failed)}
+    ${getTableEntry('test-scripts', stats?.testScripts?.total, stats?.testScripts?.failed)}
+    ${getTableEntry('prerequest-scripts', stats?.prerequestScripts?.total, stats?.prerequestScripts?.failed)}
+    ${getTableEntry('assertions', stats?.assertions?.total, stats?.assertions?.failed)}
   </table>
 </details>
 
@@ -140,32 +122,19 @@ function getNoResultsMarkup(reportName) {
 }
 
 function getFailureMarkup(failure) {
+  if (!failure) return;
+
   core.debug(`Processing ${failure.error.test}`);
 
   return `
 <details>
-  <summary>:x: ${failure.error.test || failure.source.name}</summary>    
+  <summary>:x: ${failure.error?.test || failure.source?.name}</summary>
   <table>
-    <tr>
-      <th>Error Type:</th>
-      <td><code>${failure.error.name}</code></td>
-    </tr>
-    <tr>
-      <th>Timestamp:</th>
-      <td><code>${formatDate(new Date(failure.error.timestamp))}</code></td>
-    </tr>
-    <tr>
-      <th>Source name:</th>
-      <td><code>${failure.source.name}</code></td>
-    </tr>
-    <tr>
-      <th>Path:</th>
-      <td><code>/${failure.source.request.url.path.join('/')}</code></td>
-    </tr>
-    <tr>
-      <th>Stack:</th>
-      <td><pre>${failure.error.stack}</pre></td>
-    </tr>
+    ${getTableEntry('Error Type:', [failure.error?.name, 'code'])}
+    ${getTableEntry('Timestamp:', [failure.error?.timestamp, 'code'])}
+    ${getTableEntry('Source name:', [failure.source?.name, 'code'])}
+    ${getTableEntry('Path:', [failure.source?.request?.url?.path?.join('/'), 'code'])}
+    ${getTableEntry('Stack:', [failure.error?.stack, 'pre'])}
   </table>
 </details>
   `.trim();
