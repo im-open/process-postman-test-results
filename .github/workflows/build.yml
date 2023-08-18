@@ -67,11 +67,11 @@ jobs:
           updated-version: ${{ env.NEXT_VERSION }}
 
       - name: Is a fork
-        if: github.event.pull_request.head.repo.fork
+        if: github.event.pull_request.head.repo.fork == 'true'
         run: echo "This is a fork"
 
       - name: Not a fork
-        if: ! github.event.pull_request.head.repo.fork
+        if: github.event.pull_request.head.repo.fork == 'false'
         run: echo "This is not a fork"
         
       - name: Commit unstaged readme/recompile changes if there are code changes to the action
