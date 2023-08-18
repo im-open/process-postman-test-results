@@ -27,6 +27,15 @@ jobs:
       - name: Get the next version for the readme if there are code changes to the action
         id: version
         uses: im-open/git-version-lite@v2.1.2
+
+      - name: Is Fork
+        if: github.event.pull_request.head.repo.fork == 'true'
+        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
+        
+      - name: Not a Fork
+        if: github.event.pull_request.head.repo.fork == 'false'
+        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
+          
         
   build:
     runs-on: ubuntu-latest
