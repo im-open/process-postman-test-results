@@ -16,6 +16,7 @@ const shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
 const updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 const reportName = core.getInput('report-name');
 
+console.log('This is a meaningless change designed to cause a build from forky');
 async function run() {
   try {
     const resultsJson = await readJsonResultsFromFile(resultsFile);
