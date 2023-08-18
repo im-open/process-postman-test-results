@@ -27,13 +27,26 @@ jobs:
       - name: Get the next version for the readme if there are code changes to the action
         id: version
         uses: im-open/git-version-lite@v2.1.2
+
+      - name: Is Fork
+        if: github.event.pull_request.head.repo.fork == true
+        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
+        
+      - name: Not a Fork
+        if: github.event.pull_request.head.repo.fork == false
+        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
+          
         
   build:
     runs-on: ubuntu-latest
     needs: [next-version]
 
+    permissions:
+      pull-requests: write
+
     env: 
      NEXT_VERSION: ${{ needs.next-version.outputs.NEXT_VERSION }}
+     IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
      
     steps:
       - name: Checkout
@@ -66,16 +79,44 @@ jobs:
           action-name:  ${{ github.repository }}
           updated-version: ${{ env.NEXT_VERSION }}
 
-      - name: Commit unstaged readme/recompile changes if there are code changes to the action
+      - name: write out info
+        run: |
+          echo "Fork: ${{ github.event.pull_request.head.repo.fork }}"
+          echo "Repo Payload: ${{ toJSON(github.event.pull_request.head.repo) }}"
+      
+        
+      - name: Check for unstaged readme/recompile changes if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true'
         run: |
           if [[ "$(git status --porcelain)" != "" ]]; then
             echo "There are changes to commit"
-            git config user.name github-actions
-            git config user.email github-actions@github.com
-            git add .
-            git commit -m "Update readme with latest version and/or recompile the action."
-            git push origin HEAD:${{ github.head_ref }}
+            echo "NEEDS_COMMIT=true" >> "$GITHUB_ENV"
           else
             echo "There were no changes to commit"
+            echo "NEEDS_COMMIT=false" >> "$GITHUB_ENV"
           fi
+          
+      - name: Make comment on PR requesting changes if PR is from fork
+        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let prMessage = `The pull request needs additional changes:
+              - Please run \`npm run build\` from the root of the repository to recompile changes
+              - Please update any examples in the Readme to the lastest version: \`${{env.NEXT_VERSION}}\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: prMessage
+            })
+
+      - name: Commit unstaged readme/recompile changes if PR is not from fork
+        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'false'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Update readme with latest version and/or recompile the action."
+          git push origin HEAD:${{ github.head_ref }}
+      
