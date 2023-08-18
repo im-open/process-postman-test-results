@@ -97,7 +97,7 @@ jobs:
           fi
           
       - name: Make comment on PR requesting changes if PR is from fork
-        if: env.NEEDS_COMMIT == 'true && env.IS_FORK == 'true'
+        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
         uses: actions/github-script@v6
         with:
           script: |
