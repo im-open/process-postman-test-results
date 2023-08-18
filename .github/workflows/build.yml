@@ -29,11 +29,11 @@ jobs:
         uses: im-open/git-version-lite@v2.1.2
 
       - name: Is Fork
-        if: github.event.pull_request.head.repo.fork == 'true'
+        if: github.event.pull_request.head.repo.fork == true
         run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
         
       - name: Not a Fork
-        if: github.event.pull_request.head.repo.fork == 'false'
+        if: github.event.pull_request.head.repo.fork == false
         run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
           
         
