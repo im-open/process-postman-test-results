@@ -86,7 +86,7 @@ jobs:
       
         
       - name: Check for unstaged readme/recompile changes if there are code changes to the action
-        if: steps.action-code.outputs.HAS_CHANGES == 'true' && !github.event.pull_request.head.repo.fork
+        if: steps.action-code.outputs.HAS_CHANGES == 'true'
         run: |
           if [[ "$(git status --porcelain)" != "" ]]; then
             echo "There are changes to commit"
