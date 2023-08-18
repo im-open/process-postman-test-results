@@ -66,13 +66,11 @@ jobs:
           action-name:  ${{ github.repository }}
           updated-version: ${{ env.NEXT_VERSION }}
 
-      - name: Is a fork
-        if: github.event.pull_request.head.repo.fork == 'true'
-        run: echo "This is a fork"
-
-      - name: Not a fork
-        if: github.event.pull_request.head.repo.fork == 'false'
-        run: echo "This is not a fork"
+      - name: write out info
+        run: |
+          echo "Fork: ${{ github.event.pull_request.head.repo.fork }}"
+          echo "Repo Payload: ${{ toJSON(github.event.pull_request.head.repo) }}"
+      
         
       - name: Commit unstaged readme/recompile changes if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true' && !github.event.pull_request.head.repo.fork
