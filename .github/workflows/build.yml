@@ -102,8 +102,8 @@ jobs:
         with:
           script: |
             let prMessage = `The pull request needs additional changes:
-              - Please run `npm run build` from the root of the repository to recompile changes
-              - Please update any examples in the Readme to the lastest version: ${{env.NEXT_VERSION}}`;
+              - Please run \`npm run build\` from the root of the repository to recompile changes
+              - Please update any examples in the Readme to the lastest version: \`${{env.NEXT_VERSION}}\``;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
