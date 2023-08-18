@@ -13,25 +13,38 @@ on:
   # to require that branches be up to date before they are merged.
 
 jobs:
+  next-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: 'main'
+          fetch-depth: 0
+          
+      - name: Get the next version for the readme if there are code changes to the action
+        if: steps.action-code.outputs.HAS_CHANGES == 'true'
+        id: version
+        uses: im-open/git-version-lite@v2.1.2
+        
   build:
     runs-on: ubuntu-latest
-    
+    needs: [next-version]
+
+    env: 
+     NEXT_VERSION: ${{ steps.version.outputs.NEXT_VERSION }}
+     
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
-          fetch-depth: 0
 
       - name: Setup Node.js 16
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
 
-      # If this step results in changes, they will be committed in the last step
-      - name: Recompile and Format action
-        run: npm run build
-      
       - name: Check for code changes to the action
         id: action-code
         uses: im-open/did-custom-action-code-change@v1.0.1
@@ -39,19 +52,20 @@ jobs:
           files-with-code: 'action.yml,package.json,package-lock.json'
           folders-with-code: 'src,dist'
           token: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Get the next version for the readme if there are code changes to the action
-        if: steps.action-code.outputs.HAS_CHANGES == 'true'
-        id: version
-        uses: im-open/git-version-lite@v2.1.2
 
+      # If this step results in changes, they will be committed in the last step
+      - name: Recompile and Format action if there are code changes to the action
+        if: steps.action-code.outputs.HAS_CHANGES == 'true'
+        run: npm run build
+
+      # If this step results in changes, they will be committed in the last step
       - name: Update readme with next version if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true'
         uses: im-open/update-action-version-in-file@v1.0.0
         with:
           file-to-update: './README.md'
           action-name:  ${{ github.repository }}
-          updated-version: ${{ steps.version.outputs.NEXT_VERSION }}
+          updated-version: ${{ env.NEXT_VERSION }}
 
       - name: Commit unstaged readme/recompile changes if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true'
