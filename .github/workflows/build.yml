@@ -32,7 +32,7 @@ jobs:
     needs: [next-version]
 
     env: 
-     NEXT_VERSION: ${{ steps.version.outputs.NEXT_VERSION }}
+     NEXT_VERSION: ${{ needs.next-version..outputs.NEXT_VERSION }}
      
     steps:
       - name: Checkout
