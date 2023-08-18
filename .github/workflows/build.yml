@@ -112,7 +112,7 @@ jobs:
             })
 
       - name: Commit unstaged readme/recompile changes if PR is not from fork
-        if: env.NEEDS_COMMIT == 'true && env.IS_FORK == 'false'
+        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'false'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
