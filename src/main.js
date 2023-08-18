@@ -48,7 +48,7 @@ async function run() {
       core.setOutput('test-outcome', 'Failed');
       return;
     } else {
-      core.setFailed(`An error occurred processing the cypress results file: ${error.message}`);
+      core.setFailed(`An error occurred processing the postman results file: ${error.message}`);
       core.setOutput('test-outcome', 'Failed');
     }
   }
