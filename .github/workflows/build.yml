@@ -85,6 +85,6 @@ jobs:
             //console.log(summary);
             //core.setOutput('summary', summary);
             core.setFailed(summary);
+            process.env.GITHUB_STEP_SUMMARY = summary;
             
-      
       
