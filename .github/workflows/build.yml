@@ -6,7 +6,7 @@ on:
   # to require that branches be up to date before they are merged.
 jobs:
   javascript-build:
-    uses: im-open/actions-mgmt/.github/workflows/reusable-build-javascript.yml@reusable-js-build
+    uses: im-open/actions-mgmt/.github/workflows/reusable-build-javascript.yml@main
     with:
       default-branch: main
       node-version: 16.x
