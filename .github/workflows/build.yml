@@ -81,16 +81,10 @@ jobs:
             const summary = `This PR needs a few updates before it can proceed.  Please make the following changes:
             - Recompile the action by running \`npm run build\` from the root of the repository
             - Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\``;
-            console.log('Workflow Summary:');
-            console.log(summary);
-            core.setOutput('summary', summary);
-      - name: Fail the build with instructions on how to fix it if PR is from a forked repo
-        # If this PR is from a forked repo, GH will only grant us read access, not write so we cannot comment on the PR.
-        # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
-        # Instead, fail the build and provide instructions on how to fix it.
-        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
-        run: |
-          echo '::error::${{ steps.summary.outputs.summary }}'
-          echo '${{ steps.summary.outputs.summary }}' >> $GITHUB_STEP_SUMMARY
-          exit 1
+            //console.log('Workflow Summary:');
+            //console.log(summary);
+            //core.setOutput('summary', summary);
+            core.setFailed(summary);
+            
+      
       
