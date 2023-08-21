@@ -100,8 +100,8 @@ jobs:
           EOF
           )
            
-          echo ::error::{$errorMessage}
-          echo '$errorMessage' >> $GITHUB_STEP_SUMMARY
+          echo "::error::{$errorMessage}"
+          echo "$errorMessage" >> $GITHUB_STEP_SUMMARY
 
           exit 1
 
