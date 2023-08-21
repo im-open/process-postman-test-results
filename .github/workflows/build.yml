@@ -90,7 +90,7 @@ jobs:
         # Instead, fail the build and provide instructions on how to fix it.
         if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
         run: |
-          echo "::error::${{ steps.summary.outputs.summary }}"
+          echo '::error::${{ steps.summary.outputs.summary }}'
           echo '${{ steps.summary.outputs.summary }}' >> $GITHUB_STEP_SUMMARY
           exit 1
       
