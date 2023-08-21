@@ -95,12 +95,12 @@ jobs:
         run: |
           errorMessage=$(cat <<EOF
           This PR needs a few updates before it can proceed.  Please make the following changes:
-          \t- Recompile the action by running \\\`npm run build\\\` from the root of the repository
-          \t- Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \\\`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\\\`
+            - Recompile the action by running \\\`npm run build\\\` from the root of the repository
+            - Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \\\`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\\\`
           EOF
           )
            
-          echo "::error::{$errorMessage}"
+          echo "::error::$errorMessage"
           echo "$errorMessage" >> $GITHUB_STEP_SUMMARY
 
           exit 1
