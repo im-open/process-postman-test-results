@@ -28,15 +28,6 @@ jobs:
         id: version
         uses: im-open/git-version-lite@v2.1.2
 
-      - name: Is Fork
-        if: github.event.pull_request.head.repo.fork == true
-        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
-        
-      - name: Not a Fork
-        if: github.event.pull_request.head.repo.fork == false
-        run: echo "Fork status - ${{ github.event.pull_request.head.repo.fork }}"
-          
-        
   build:
     runs-on: ubuntu-latest
     needs: [next-version]
@@ -96,20 +87,23 @@ jobs:
             echo "NEEDS_COMMIT=false" >> "$GITHUB_ENV"
           fi
           
-      - name: Make comment on PR requesting changes if PR is from fork
+      - name: Fail the build with instructions on how to fix it if PR is from a forked repo
+        # If this PR is from a forked repo, GH will only grant us read access, not write so we cannot comment on the PR.
+        # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+        # Instead, fail the build and provide instructions on how to fix it.
         if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            let prMessage = `The pull request needs additional changes:
-              - Please run \`npm run build\` from the root of the repository to recompile changes
-              - Please update any examples in the Readme to the lastest version: \`${{env.NEXT_VERSION}}\``;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: prMessage
-            })
+        run: |
+
+          errorMessage=$(cat << EOF
+            This PR needs a few updates before it can proceed.  Please make the following changes:
+            \t- Recompile the action by running \\\`npm run build\\\` from the root of the repository
+            \t- Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \\\`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\\\`
+          EOF )
+
+          ::error::{$errorMessage}
+          echo '$errorMessage' >> $GITHUB_STEP_SUMMARY
+
+          exit 1
 
       - name: Commit unstaged readme/recompile changes if PR is not from fork
         if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'false'
