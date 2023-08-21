@@ -13,78 +13,13 @@ on:
   # to require that branches be up to date before they are merged.
 
 jobs:
-  next-version:
-    runs-on: ubuntu-latest
-    outputs:
-      NEXT_VERSION: ${{ steps.version.outputs.NEXT_VERSION }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: 'main'
-          fetch-depth: 0
-          
-      - name: Get the next version for the readme if there are code changes to the action
-        id: version
-        uses: im-open/git-version-lite@v2.1.2
-
-  build:
-    runs-on: ubuntu-latest
-    needs: [next-version]
-
-    permissions:
-      pull-requests: write
-
-    env: 
-     NEXT_VERSION: ${{ needs.next-version.outputs.NEXT_VERSION }}
-     IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
-     
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js 16
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-
-      - name: Check for code changes to the action
-        id: action-code
-        uses: im-open/did-custom-action-code-change@v1.0.1
-        with:
-          files-with-code: 'action.yml,package.json,package-lock.json'
-          folders-with-code: 'src,dist'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # If this step results in changes, they will be committed in the last step
-      - name: Recompile and Format action if there are code changes to the action
-        if: steps.action-code.outputs.HAS_CHANGES == 'true'
-        run: npm run build
-   
-      - name: Check for unstaged readme/recompile changes if there are code changes to the action
-        if: steps.action-code.outputs.HAS_CHANGES == 'true'
-        run: |
-          if [[ "$(git status --porcelain)" != "" ]]; then
-            echo "There are changes to commit"
-            echo "NEEDS_COMMIT=true" >> "$GITHUB_ENV"
-          else
-            echo "There were no changes to commit"
-            echo "NEEDS_COMMIT=false" >> "$GITHUB_ENV"
-          fi
-          
-      - name: Construct Failing Workflow Summary
-        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
-        id: summary
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const summary = `This PR needs a few updates before it can proceed.  Please make the following changes:
-            - Recompile the action by running \`npm run build\` from the root of the repository
-            - Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\``;
-            //console.log('Workflow Summary:');
-            //console.log(summary);
-            //core.setOutput('summary', summary);
-            core.setFailed(summary);
-            process.env.GITHUB_STEP_SUMMARY = summary;
-            
-      
+  javascript-build:
+    uses: im-open/actions-mgmt/.github/workflows/reusable-build-javascript.yml@reusable-js-build
+    with:
+      default-branch: main
+      node-version: 16.x
+      files-with-code: 'action.yml,package.json,package-lock.json'
+      folders-with-code: 'src,dist'
+      build-command: 'npm run build'
+      readme-location: './README.md'
+      action-name: ${{ github.repository }}
