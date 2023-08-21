@@ -60,22 +60,7 @@ jobs:
       - name: Recompile and Format action if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true'
         run: npm run build
-
-      # If this step results in changes, they will be committed in the last step
-      - name: Update readme with next version if there are code changes to the action
-        if: steps.action-code.outputs.HAS_CHANGES == 'true'
-        uses: im-open/update-action-version-in-file@v1.0.0
-        with:
-          file-to-update: './README.md'
-          action-name:  ${{ github.repository }}
-          updated-version: ${{ env.NEXT_VERSION }}
-
-      - name: write out info
-        run: |
-          echo "Fork: ${{ github.event.pull_request.head.repo.fork }}"
-          echo "Repo Payload: ${{ toJSON(github.event.pull_request.head.repo) }}"
-      
-        
+   
       - name: Check for unstaged readme/recompile changes if there are code changes to the action
         if: steps.action-code.outputs.HAS_CHANGES == 'true'
         run: |
@@ -87,30 +72,25 @@ jobs:
             echo "NEEDS_COMMIT=false" >> "$GITHUB_ENV"
           fi
           
+      - name: Construct Failing Workflow Summary
+        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
+        id: summary
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const summary = `This PR needs a few updates before it can proceed.  Please make the following changes:
+            - Recompile the action by running \`npm run build\` from the root of the repository
+            - Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\``;
+            console.log('Workflow Summary:');
+            console.log(summary);
+            core.setOutput('summary', summary);
       - name: Fail the build with instructions on how to fix it if PR is from a forked repo
         # If this PR is from a forked repo, GH will only grant us read access, not write so we cannot comment on the PR.
         # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
         # Instead, fail the build and provide instructions on how to fix it.
         if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'true'
         run: |
-          errorMessage=$(cat <<EOF
-          This PR needs a few updates before it can proceed.  Please make the following changes:
-            - Recompile the action by running \\\`npm run build\\\` from the root of the repository
-            - Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \\\`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\\\`
-          EOF
-          )
-           
-          echo "::error::$errorMessage"
-          echo "$errorMessage" >> $GITHUB_STEP_SUMMARY
-
+          echo "::error::${{ steps.summary.outputs.summary }}"
+          echo '${{ steps.summary.outputs.summary }}' >> $GITHUB_STEP_SUMMARY
           exit 1
-
-      - name: Commit unstaged readme/recompile changes if PR is not from fork
-        if: env.NEEDS_COMMIT == 'true' && env.IS_FORK == 'false'
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "Update readme with latest version and/or recompile the action."
-          git push origin HEAD:${{ github.head_ref }}
       
