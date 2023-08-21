@@ -99,8 +99,8 @@ jobs:
           \t- Update the version for all instances of this action in the ${{ inputs.readme-location }}.  It should be changed to: \\\`uses: im-open/${{ inputs.action-name }}@${{ env.NEXT_VERSION }}\\\`
           EOF
           )
-         
-          ::error::{$errorMessage}
+           
+          echo ::error::{$errorMessage}
           echo '$errorMessage' >> $GITHUB_STEP_SUMMARY
 
           exit 1
