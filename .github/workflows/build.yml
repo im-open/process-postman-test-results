@@ -4,6 +4,7 @@ on:
   # Don't include any specific paths here so we always get a build that produces a status
   # check that our Branch Protection Rules can use.  Having a status check also allows us
   # to require that branches be up to date before they are merged.
+
 jobs:
   javascript-build:
     uses: im-open/.github/.github/workflows/reusable-javascript-build.yml@reusable-updates
