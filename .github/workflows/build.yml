@@ -23,3 +23,7 @@ jobs:
       build-command: 'npm run build'
       readme-location: './README.md'
       action-name: ${{ github.repository }}
+    secrets:
+      PIPELINE_BOT_PAT: ${{ secrets.PIPELINE_BOT_PAT }}
+
+
