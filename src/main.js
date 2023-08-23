@@ -8,6 +8,8 @@ const requiredArgOptions = {
   trimWhitespace: true
 };
 
+console.log('I am making changes for testing');
+
 const token = core.getInput('github-token', requiredArgOptions);
 const resultsFile = core.getInput('results-file', requiredArgOptions);
 const ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
