@@ -15,4 +15,4 @@ jobs:
       folders-with-code: 'src,dist'
       build-command: 'npm run build'
       readme-location: './README.md'
-      action-name: ${{ github.repository }}
+      action-name: ${{ github.repository }} 
