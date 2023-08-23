@@ -20080,6 +20080,7 @@ var requiredArgOptions = {
   required: true,
   trimWhitespace: true
 };
+console.log('I am making changes for testing');
 var token = core.getInput('github-token', requiredArgOptions);
 var resultsFile = core.getInput('results-file', requiredArgOptions);
 var ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
