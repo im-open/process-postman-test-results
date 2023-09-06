@@ -10,7 +10,7 @@ inputs:
     description: 'Token used to interact with the repository.  Generally secrets.GITHUB_TOKEN.'
     required: true
   results-file:
-    description: 'The json test results file output by postman/newman json reporter.'
+    description: 'The json test results file output by postman or newman json reporter.'
     required: true
   report-name:
     description: 'The desired name of the report that is shown on the PR Comment and inside the Status Check.'
