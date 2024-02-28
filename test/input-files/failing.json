@@ -1,0 +1,76 @@
+{
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "testScripts": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 2,
+        "pending": 0,
+        "failed": 2
+      }
+    },
+    "timings": {
+      "started": 1709138135481,
+      "completed": 1709138135550,
+      "responseAverage": 32,
+      "responseMin": 32,
+      "responseMax": 32
+    },
+    "failures": [
+      {
+        "error": {
+          "test": "Status code is 801",
+          "name": "AssertionError",
+          "timestamp": 1709138135541,
+          "stack": "AssertionError: expected response to have status code 801 but got 301\n   at Object.eval sandbox-script.js:1:1)"
+        },
+        "source": {
+          "name": "/about",
+          "request": {
+            "url": {
+              "path": [
+                "accessibility"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "error": {
+          "test": "Redirected to correct location",
+          "name": "AssertionError",
+          "timestamp": 1709138135543,
+          "stack": "AssertionError: expected response to have header with key 'Vocation'\n   at Object.eval sandbox-script.js:2:1)"
+        },
+        "source": {
+          "name": "/about",
+          "request": {
+            "url": {
+              "path": [
+                "accessibility"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

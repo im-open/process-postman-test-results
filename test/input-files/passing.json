@@ -1,0 +1,39 @@
+{
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 3,
+        "pending": 0,
+        "failed": 0
+      },
+      "testScripts": {
+        "total": 3,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 6,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    "timings": {
+      "started": 1709138367995,
+      "completed": 1709138368092,
+      "responseAverage": 11.333333333333334,
+      "responseMin": 2,
+      "responseMax": 26
+    },
+    "failures": []
+  }
+}
