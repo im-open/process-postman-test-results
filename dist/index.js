@@ -690,7 +690,7 @@ var require_file_command = __commonJS({
       };
     Object.defineProperty(exports2, '__esModule', { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
-    var fs2 = __importStar(require('fs'));
+    var fs = __importStar(require('fs'));
     var os = __importStar(require('os'));
     var uuid_1 = require_dist();
     var utils_1 = require_utils();
@@ -699,10 +699,10 @@ var require_file_command = __commonJS({
       if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
       }
-      if (!fs2.existsSync(filePath)) {
+      if (!fs.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs2.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+      fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
         encoding: 'utf8'
       });
     }
@@ -2368,7 +2368,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 var require_utils2 = __commonJS({
   'src/utils.js'(exports2, module2) {
     var core2 = require_core();
-    var fs2 = require('fs');
+    var fs = require('fs');
     var path = require('path');
     function camelCaseKeys(original) {
       if (!original || typeof original !== 'object' || Array.isArray(original)) return original;
@@ -2385,8 +2385,8 @@ var require_utils2 = __commonJS({
     }
     async function readJsonResultsFromFile2(resultsFile2) {
       core2.info('Reading results from postman results file....');
-      if (fs2.existsSync(resultsFile2)) {
-        const rawJson = fs2.readFileSync(resultsFile2, 'utf8');
+      if (fs.existsSync(resultsFile2)) {
+        const rawJson = fs.readFileSync(resultsFile2, 'utf8');
         if (!rawJson) {
           core2.info(
             `The results file '${resultsFile2}' does not contain any data.  No status check or PR comment will be created.`
@@ -2437,7 +2437,7 @@ Checking for failing tests..`);
       core2.info(`
 Writing results to ${resultsFileName}`);
       let resultsFilePath = null;
-      fs2.writeFile(resultsFileName, results, err => {
+      fs.writeFile(resultsFileName, results, err => {
         if (err) {
           core2.info(`Error writing results to file. Error: ${err}`);
         } else {
@@ -20172,11 +20172,6 @@ Creating a PR comment with length ${markupData.length}...`);
 `;
         mdForComment = `${truncatedMessage}
 ${mdForComment.substring(0, characterLimit - 100)}`;
-        fs.writeFile('truncate-truncated-markdown.md', mdForComment, err => {
-          if (err) {
-            core.info(`Error writing results to file. Error: ${err}`);
-          }
-        });
       }
       core.setOutput('test-results-truncated', truncated);
       const commentId = await createPrComment(token, mdForComment, updateCommentIfOneExists, commentIdentifier);

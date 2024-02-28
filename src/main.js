@@ -55,12 +55,6 @@ async function run() {
         truncated = true;
         const truncatedMessage = `> [!Important]\n> Test results truncated due to character limit.  See full report in output.\n`;
         mdForComment = `${truncatedMessage}\n${mdForComment.substring(0, characterLimit - 100)}`;
-
-        fs.writeFile('truncate-truncated-markdown.md', mdForComment, err => {
-          if (err) {
-            core.info(`Error writing results to file. Error: ${err}`);
-          }
-        });
       }
       core.setOutput('test-results-truncated', truncated);
 

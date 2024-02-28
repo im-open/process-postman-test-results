@@ -19,15 +19,15 @@
     </tr>
     <tr>
       <th>Response Time Average:</th>
-      <td><code>0</code></td>
+      <td><code>N/A</code></td>
     </tr>
     <tr>
       <th>Response Time Min:</th>
-      <td><code>0</code></td>
+      <td><code>N/A</code></td>
     </tr>
     <tr>
       <th>Response Time Max:</th>
-      <td><code>0</code></td>
+      <td><code>N/A</code></td>
     </tr>
   </table>
 </details>
