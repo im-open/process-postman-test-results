@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const fs = require('fs');
+const path = require('path');
 
 function camelCaseKeys(original) {
   if (!original || typeof original !== 'object' || Array.isArray(original)) return original;
@@ -60,7 +61,7 @@ async function readJsonResultsFromFile(resultsFile) {
 function areThereAnyFailingTests(json) {
   core.info(`\nChecking for failing tests..`);
 
-  if (json.hasFailures) {
+  if (json.failures.length > 0) {
     core.warning(`At least one failing test was found.`);
     return true;
   }

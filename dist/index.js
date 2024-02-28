@@ -2058,7 +2058,7 @@ var require_path_utils = __commonJS({
       };
     Object.defineProperty(exports2, '__esModule', { value: true });
     exports2.toPlatformPath = exports2.toWin32Path = exports2.toPosixPath = void 0;
-    var path2 = __importStar(require('path'));
+    var path = __importStar(require('path'));
     function toPosixPath(pth) {
       return pth.replace(/[\\]/g, '/');
     }
@@ -2068,7 +2068,7 @@ var require_path_utils = __commonJS({
     }
     exports2.toWin32Path = toWin32Path;
     function toPlatformPath(pth) {
-      return pth.replace(/[/\\]/g, path2.sep);
+      return pth.replace(/[/\\]/g, path.sep);
     }
     exports2.toPlatformPath = toPlatformPath;
   }
@@ -2173,7 +2173,7 @@ var require_core = __commonJS({
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
     var os = __importStar(require('os'));
-    var path2 = __importStar(require('path'));
+    var path = __importStar(require('path'));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
     (function (ExitCode2) {
@@ -2201,7 +2201,7 @@ var require_core = __commonJS({
       } else {
         command_1.issueCommand('add-path', {}, inputPath);
       }
-      process.env['PATH'] = `${inputPath}${path2.delimiter}${process.env['PATH']}`;
+      process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
     }
     exports2.addPath = addPath;
     function getInput(name, options) {
@@ -2369,6 +2369,7 @@ var require_utils2 = __commonJS({
   'src/utils.js'(exports2, module2) {
     var core2 = require_core();
     var fs2 = require('fs');
+    var path = require('path');
     function camelCaseKeys(original) {
       if (!original || typeof original !== 'object' || Array.isArray(original)) return original;
       return Object.entries(original).reduce((obj, [key, value]) => {
@@ -2424,7 +2425,7 @@ var require_utils2 = __commonJS({
     function areThereAnyFailingTests2(json) {
       core2.info(`
 Checking for failing tests..`);
-      if (json.hasFailures) {
+      if (json.failures.length > 0) {
         core2.warning(`At least one failing test was found.`);
         return true;
       }
@@ -2471,8 +2472,8 @@ var require_context = __commonJS({
           if (fs_1.existsSync(process.env.GITHUB_EVENT_PATH)) {
             this.payload = JSON.parse(fs_1.readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' }));
           } else {
-            const path2 = process.env.GITHUB_EVENT_PATH;
-            process.stdout.write(`GITHUB_EVENT_PATH ${path2} does not exist${os_1.EOL}`);
+            const path = process.env.GITHUB_EVENT_PATH;
+            process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${os_1.EOL}`);
           }
         }
         this.eventName = process.env.GITHUB_EVENT_NAME;
@@ -12034,14 +12035,14 @@ var require_url_state_machine = __commonJS({
       return url.replace(/\u0009|\u000A|\u000D/g, '');
     }
     function shortenPath(url) {
-      const path2 = url.path;
-      if (path2.length === 0) {
+      const path = url.path;
+      if (path.length === 0) {
         return;
       }
-      if (url.scheme === 'file' && path2.length === 1 && isNormalizedWindowsDriveLetter(path2[0])) {
+      if (url.scheme === 'file' && path.length === 1 && isNormalizedWindowsDriveLetter(path[0])) {
         return;
       }
-      path2.pop();
+      path.pop();
     }
     function includesCredentials(url) {
       return url.username !== '' || url.password !== '';
@@ -20009,9 +20010,9 @@ ${getTestTimes(jsonResults.timings)}
 ${getTestCounters(jsonResults)}
 ${getFailedAndEmptyTestResultsMarkup(jsonResults.failures, reportName2)}`;
     }
-    function getBadge(stats2, name) {
-      const failedCount = stats2.failed;
-      const totalCount = stats2.total;
+    function getBadge(stats, name) {
+      const failedCount = stats.failed;
+      const totalCount = stats.total;
       const passedCount = totalCount - failedCount;
       const badgeCountText = failedCount > 0 ? `${failedCount}/${totalCount}` : `${passedCount}/${totalCount}`;
       const badgeStatusText = failedCount > 0 ? 'FAILED' : 'PASSED';
@@ -20059,7 +20060,8 @@ ${getFailedAndEmptyTestResultsMarkup(jsonResults.failures, reportName2)}`;
 </details>`;
     }
     function getTestCounters(run2) {
-      const outcome = run2.hasFailures ? 'Failed' : 'Passed';
+      const outcome = run2.failures.length > 0 ? 'Failed' : 'Passed';
+      const stats = run2.stats;
       return `<details>
   <summary>Outcome: ${outcome}</summary>
   <table>

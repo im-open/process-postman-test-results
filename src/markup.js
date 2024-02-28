@@ -71,7 +71,8 @@ function getTestTimes(timings) {
 }
 
 function getTestCounters(run) {
-  const outcome = run.hasFailures ? 'Failed' : 'Passed';
+  const outcome = run.failures.length > 0 ? 'Failed' : 'Passed';
+  const stats = run.stats;
 
   return `<details>
   <summary>Outcome: ${outcome}</summary>
