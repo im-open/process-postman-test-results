@@ -690,7 +690,7 @@ var require_file_command = __commonJS({
       };
     Object.defineProperty(exports2, '__esModule', { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
-    var fs = __importStar(require('fs'));
+    var fs2 = __importStar(require('fs'));
     var os = __importStar(require('os'));
     var uuid_1 = require_dist();
     var utils_1 = require_utils();
@@ -699,10 +699,10 @@ var require_file_command = __commonJS({
       if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
       }
-      if (!fs.existsSync(filePath)) {
+      if (!fs2.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+      fs2.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
         encoding: 'utf8'
       });
     }
@@ -2058,7 +2058,7 @@ var require_path_utils = __commonJS({
       };
     Object.defineProperty(exports2, '__esModule', { value: true });
     exports2.toPlatformPath = exports2.toWin32Path = exports2.toPosixPath = void 0;
-    var path = __importStar(require('path'));
+    var path2 = __importStar(require('path'));
     function toPosixPath(pth) {
       return pth.replace(/[\\]/g, '/');
     }
@@ -2068,7 +2068,7 @@ var require_path_utils = __commonJS({
     }
     exports2.toWin32Path = toWin32Path;
     function toPlatformPath(pth) {
-      return pth.replace(/[/\\]/g, path.sep);
+      return pth.replace(/[/\\]/g, path2.sep);
     }
     exports2.toPlatformPath = toPlatformPath;
   }
@@ -2173,7 +2173,7 @@ var require_core = __commonJS({
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
     var os = __importStar(require('os'));
-    var path = __importStar(require('path'));
+    var path2 = __importStar(require('path'));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
     (function (ExitCode2) {
@@ -2201,7 +2201,7 @@ var require_core = __commonJS({
       } else {
         command_1.issueCommand('add-path', {}, inputPath);
       }
-      process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
+      process.env['PATH'] = `${inputPath}${path2.delimiter}${process.env['PATH']}`;
     }
     exports2.addPath = addPath;
     function getInput(name, options) {
@@ -2368,7 +2368,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 var require_utils2 = __commonJS({
   'src/utils.js'(exports2, module2) {
     var core2 = require_core();
-    var fs = require('fs');
+    var fs2 = require('fs');
     function camelCaseKeys(original) {
       if (!original || typeof original !== 'object' || Array.isArray(original)) return original;
       return Object.entries(original).reduce((obj, [key, value]) => {
@@ -2384,8 +2384,8 @@ var require_utils2 = __commonJS({
     }
     async function readJsonResultsFromFile2(resultsFile2) {
       core2.info('Reading results from postman results file....');
-      if (fs.existsSync(resultsFile2)) {
-        const rawJson = fs.readFileSync(resultsFile2, 'utf8');
+      if (fs2.existsSync(resultsFile2)) {
+        const rawJson = fs2.readFileSync(resultsFile2, 'utf8');
         if (!rawJson) {
           core2.info(
             `The results file '${resultsFile2}' does not contain any data.  No status check or PR comment will be created.`
@@ -2398,15 +2398,22 @@ var require_utils2 = __commonJS({
             `The results file '${resultsFile2} does not appear to be in the correct format.  No status check or PR comment will be created.`
           );
           return;
-        } else {
-          return {
-            stats: parsedJson.run.stats,
-            timings: parsedJson.run.timings,
-            failures: parsedJson.run.failures,
-            hasFailures: parsedJson.run.failures.length > 0,
-            outcome: parsedJson.run.failures.length > 0 ? 'Failed' : 'Passed'
-          };
         }
+        const emptyStat = {
+          total: 0,
+          pending: 0,
+          failed: 0
+        };
+        if (!parsedJson.run.stats.iterations) parsedJson.run.stats.iterations = emptyStat;
+        if (!parsedJson.run.stats.requests) parsedJson.run.stats.requests = emptyStat;
+        if (!parsedJson.run.stats.testScripts) parsedJson.run.stats.testScripts = emptyStat;
+        if (!parsedJson.run.stats.prerequestScripts) parsedJson.run.stats.prerequestScripts = emptyStat;
+        if (!parsedJson.run.stats.assertions) parsedJson.run.stats.assertions = emptyStat;
+        return {
+          stats: parsedJson.run.stats,
+          timings: parsedJson.run.timings,
+          failures: parsedJson.run.failures
+        };
       } else {
         core2.setFailed(
           `The results file '${resultsFile2}' does not exist.  No status check or PR comment will be created.`
@@ -2414,8 +2421,36 @@ var require_utils2 = __commonJS({
         return;
       }
     }
+    function areThereAnyFailingTests2(json) {
+      core2.info(`
+Checking for failing tests..`);
+      if (json.hasFailures) {
+        core2.warning(`At least one failing test was found.`);
+        return true;
+      }
+      core2.info(`There are no failing tests.`);
+      return false;
+    }
+    function createResultsFile2(results, jobAndStep2) {
+      const resultsFileName = `test-results-${jobAndStep2}.md`;
+      core2.info(`
+Writing results to ${resultsFileName}`);
+      let resultsFilePath = null;
+      fs2.writeFile(resultsFileName, results, err => {
+        if (err) {
+          core2.info(`Error writing results to file. Error: ${err}`);
+        } else {
+          core2.info('Successfully created results file.');
+          core2.info(`File: ${resultsFileName}`);
+        }
+      });
+      resultsFilePath = path.resolve(resultsFileName);
+      return resultsFilePath;
+    }
     module2.exports = {
-      readJsonResultsFromFile: readJsonResultsFromFile2
+      readJsonResultsFromFile: readJsonResultsFromFile2,
+      areThereAnyFailingTests: areThereAnyFailingTests2,
+      createResultsFile: createResultsFile2
     };
   }
 });
@@ -2436,8 +2471,8 @@ var require_context = __commonJS({
           if (fs_1.existsSync(process.env.GITHUB_EVENT_PATH)) {
             this.payload = JSON.parse(fs_1.readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' }));
           } else {
-            const path = process.env.GITHUB_EVENT_PATH;
-            process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${os_1.EOL}`);
+            const path2 = process.env.GITHUB_EVENT_PATH;
+            process.stdout.write(`GITHUB_EVENT_PATH ${path2} does not exist${os_1.EOL}`);
           }
         }
         this.eventName = process.env.GITHUB_EVENT_NAME;
@@ -11999,14 +12034,14 @@ var require_url_state_machine = __commonJS({
       return url.replace(/\u0009|\u000A|\u000D/g, '');
     }
     function shortenPath(url) {
-      const path = url.path;
-      if (path.length === 0) {
+      const path2 = url.path;
+      if (path2.length === 0) {
         return;
       }
-      if (url.scheme === 'file' && path.length === 1 && isNormalizedWindowsDriveLetter(path[0])) {
+      if (url.scheme === 'file' && path2.length === 1 && isNormalizedWindowsDriveLetter(path2[0])) {
         return;
       }
-      path.pop();
+      path2.pop();
     }
     function includesCredentials(url) {
       return url.username !== '' || url.password !== '';
@@ -16648,37 +16683,50 @@ var require_github2 = __commonJS({
   'src/github.js'(exports2, module2) {
     var core2 = require_core();
     var github = require_github();
-    var markupPrefix = '<!-- im-open/process-postman-test-results -->';
     async function createStatusCheck2(repoToken, markupData, conclusion, reportName2) {
-      core2.info(`Creating Status check for ${reportName2}...`);
+      core2.info(`
+Creating Status check for ${reportName2}...`);
       const octokit = github.getOctokit(repoToken);
       const git_sha =
         github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
-      core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
+      const name = `status check - ${reportName2.toLowerCase()}`;
+      const status = 'completed';
       const checkTime = new Date().toUTCString();
-      core2.info(`Check time is: ${checkTime}`);
+      const summary = `This test run completed at \`${checkTime}\``;
+      const propMessage = `  Name: ${name}
+  GitSha: ${git_sha}
+  Event: ${github.context.eventName}
+  Status: ${status}
+  Conclusion: ${conclusion}
+  Check time: ${checkTime}
+  Title: ${reportName2}
+  Summary: ${summary}`;
+      core2.info(propMessage);
+      let statusCheckId;
       await octokit.rest.checks
         .create({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
-          name: `status check - ${reportName2.toLowerCase()}`,
+          name,
           head_sha: git_sha,
-          status: 'completed',
+          status,
           conclusion,
           output: {
             title: reportName2,
-            summary: `This test run completed at \`${checkTime}\``,
+            summary,
             text: markupData
           }
         })
         .then(response => {
-          core2.info(`Created check: ${response.data.name}`);
+          core2.info(`Created check: '${response.data.name}' with id '${response.data.id}'`);
+          statusCheckId = response.data.id;
         })
         .catch(error => {
           core2.setFailed(`An error occurred trying to create the status check: ${error.message}`);
         });
+      return statusCheckId;
     }
-    async function lookForExistingComment(octokit) {
+    async function lookForExistingComment(octokit, markdownPrefix) {
       let commentId = null;
       await octokit
         .paginate(octokit.rest.issues.listComments, {
@@ -16690,7 +16738,7 @@ var require_github2 = __commonJS({
           if (comments.length === 0) {
             core2.info('There are no comments on the PR.  A new comment will be created.');
           } else {
-            const existingComment = comments.find(c => c.body.startsWith(markupPrefix));
+            const existingComment = comments.find(c => c.body.startsWith(markdownPrefix));
             if (existingComment) {
               core2.info(`An existing comment (${existingComment.id}) was found and will be updated.`);
               commentId = existingComment.id;
@@ -16705,25 +16753,29 @@ var require_github2 = __commonJS({
       core2.info(`Finished getting comments for PR #${github.context.payload.pull_request.number}.`);
       return commentId;
     }
-    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2) {
+    async function createPrComment2(repoToken, markdown, updateCommentIfOneExists2, commentIdentifier2) {
       if (github.context.eventName != 'pull_request') {
         core2.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
         return;
       }
+      const markdownPrefix = `<!-- im-open/process-postman-test-results ${commentIdentifier2} -->`;
+      core2.info(`The markdown prefix will be: '${markdownPrefix}'`);
       const octokit = github.getOctokit(repoToken);
+      let commentIdToReturn;
       let existingCommentId = null;
       if (updateCommentIfOneExists2) {
         core2.info('Checking for existing comment on PR....');
-        existingCommentId = await lookForExistingComment(octokit);
+        existingCommentId = await lookForExistingComment(octokit, markdownPrefix);
       }
       if (existingCommentId) {
         core2.info(`Updating existing PR #${existingCommentId} comment...`);
+        commentIdToReturn = existingCommentId;
         await octokit.rest.issues
           .updateComment({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            body: `${markupPrefix}
-${markupData}`,
+            body: `${markdownPrefix}
+${markdown}`,
             comment_id: existingCommentId
           })
           .then(response => {
@@ -16738,17 +16790,19 @@ ${markupData}`,
           .createComment({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            body: `${markupPrefix}
-${markupData}`,
+            body: `${markdownPrefix}
+${markdown}`,
             issue_number: github.context.payload.pull_request.number
           })
           .then(response => {
             core2.info(`PR comment was created.  ID: ${response.data.id}.`);
+            commentIdToReturn = response.data.id;
           })
           .catch(error => {
             core2.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);
           });
       }
+      return commentIdToReturn;
     }
     module2.exports = {
       createStatusCheck: createStatusCheck2,
@@ -19947,18 +20001,17 @@ var require_markup = __commonJS({
     var timezone = core2.getInput('timezone') || 'Etc/UTC';
     var formatDistance = require_formatDistance2();
     function getMarkupForJson2(jsonResults, reportName2) {
-      return `
-# ${reportName2}
+      return `# ${reportName2}
+
 ${getBadge(jsonResults.stats.requests, 'Requests')}
 ${getBadge(jsonResults.stats.assertions, 'Assertions')}
 ${getTestTimes(jsonResults.timings)}
 ${getTestCounters(jsonResults)}
-${getTestResultsMarkup(jsonResults.failures, reportName2)}
-  `;
+${getFailedAndEmptyTestResultsMarkup(jsonResults.failures, reportName2)}`;
     }
-    function getBadge(stats, name) {
-      const failedCount = stats.failed;
-      const totalCount = stats.total;
+    function getBadge(stats2, name) {
+      const failedCount = stats2.failed;
+      const totalCount = stats2.total;
       const passedCount = totalCount - failedCount;
       const badgeCountText = failedCount > 0 ? `${failedCount}/${totalCount}` : `${passedCount}/${totalCount}`;
       const badgeStatusText = failedCount > 0 ? 'FAILED' : 'PASSED';
@@ -19973,21 +20026,19 @@ ${getTestResultsMarkup(jsonResults.failures, reportName2)}
         return format(dateToFormat, 'yyyy-MM-dd HH:mm:ss.SSS zzz');
       }
     }
-    function getEntryValue(value) {
-      let valueArray = Array.isArray(value) ? value : [value];
-      const [val, wrapper] = valueArray;
-      if (!val) return '';
-      return wrapper ? `<${wrapper}>${val}</${wrapper}>` : val;
+    function getRowWithTwoColumns(title, value, wrapper) {
+      if (!wrapper) wrapper = 'code';
+      return `<tr>
+      <th>${title}</th>
+      <td><${wrapper}>${value || 'N/A'}</${wrapper}></td>
+    </tr>`;
     }
-    function getTableEntry(title, ...values) {
-      const tableValues = values.map(getEntryValue);
-      if (!tableValues.some(val => val)) return '';
-      return `
-<tr>
-  <th>${title}</th>
-  ${tableValues.map(val => `<td>${val}</td>`).join('')}
-</tr>
-`;
+    function getRowWithThreeColumns(title, value1, value2) {
+      return `<tr>
+      <th>${title}</th>
+      <td>${value1 || 0}</td>
+      <td>${value2 || 0}</td>
+    </tr>`;
     }
     function getTestTimes(timings) {
       const startDate = new Date(timings.started);
@@ -19995,42 +20046,37 @@ ${getTestResultsMarkup(jsonResults.failures, reportName2)}
       const duration = formatDistance(endDate, startDate, {
         includeSeconds: true
       });
-      return `
-<details>
-  <summary> Duration: ${duration} </summary>
+      return `<details>
+  <summary>Duration: ${duration}</summary>
   <table>
-    ${getTableEntry('Start:', [formatDate(startDate), 'code'])}
-    ${getTableEntry('Finish:', [formatDate(endDate), 'code'])}
-    ${getTableEntry('Duration:', [`${(timings.completed - timings.started) / 1e3}`, 'code'])}
-    ${getTableEntry('Response Time Average:', [timings?.responseAverage, 'code'])}
-    ${getTableEntry('Response Time Min:', [timings?.responseMin, 'code'])}
-    ${getTableEntry('Response Time Max:', [timings?.responseMax, 'code'])}
+    ${getRowWithTwoColumns('Start:', formatDate(startDate))}
+    ${getRowWithTwoColumns('Finish:', formatDate(endDate))}
+    ${getRowWithTwoColumns('Duration:', (timings.completed - timings.started) / 1e3)}
+    ${getRowWithTwoColumns('Response Time Average:', timings.responseAverage)}
+    ${getRowWithTwoColumns('Response Time Min:', timings.responseMin)}
+    ${getRowWithTwoColumns('Response Time Max:', timings.responseMax)}
   </table>
-</details>
-  `;
+</details>`;
     }
     function getTestCounters(run2) {
-      let stats = run2.stats;
-      return `
-<details>
-  <summary> Outcome: ${run2.outcome}</summary>
+      const outcome = run2.hasFailures ? 'Failed' : 'Passed';
+      return `<details>
+  <summary>Outcome: ${outcome}</summary>
   <table>
     <tr>
       <th></th>
       <th>executed</th>
-      <td>failed</td>
+      <th>failed</th>
     </tr>
-    ${getTableEntry('iterations', stats?.iterations?.total, stats?.iterations?.failed)}
-    ${getTableEntry('requests', stats?.requests?.total, stats?.requests?.failed)}
-    ${getTableEntry('test-scripts', stats?.testScripts?.total, stats?.testScripts?.failed)}
-    ${getTableEntry('prerequest-scripts', stats?.prerequestScripts?.total, stats?.prerequestScripts?.failed)}
-    ${getTableEntry('assertions', stats?.assertions?.total, stats?.assertions?.failed)}
+    ${getRowWithThreeColumns('iterations', stats.iterations.total, stats.iterations.failed)}
+    ${getRowWithThreeColumns('requests', stats.requests.total, stats.requests.failed)}
+    ${getRowWithThreeColumns('test-scripts', stats.testScripts.total, stats.testScripts.failed)}
+    ${getRowWithThreeColumns('prerequest-scripts', stats.prerequestScripts.total, stats.prerequestScripts.failed)}
+    ${getRowWithThreeColumns('assertions', stats.assertions.total, stats.assertions.failed)}
   </table>
-</details>
-
-  `;
+</details>`;
     }
-    function getTestResultsMarkup(failures, reportName2) {
+    function getFailedAndEmptyTestResultsMarkup(failures, reportName2) {
       let resultsMarkup = '';
       if (!failures || failures.length === 0) {
         return getNoResultsMarkup(reportName2);
@@ -20038,32 +20084,34 @@ ${getTestResultsMarkup(jsonResults.failures, reportName2)}
         failures.forEach(failure => {
           resultsMarkup += getFailureMarkup(failure);
         });
-        return resultsMarkup.trim();
+        return resultsMarkup;
       }
     }
     function getNoResultsMarkup(reportName2) {
       const testResultIcon = ':grey_question:';
       const resultsMarkup = `
-  ## ${testResultIcon} ${reportName2}
-  There were no failures to report.
-  `;
+## ${testResultIcon} ${reportName2}
+
+There were no failures to report.
+`;
       return resultsMarkup;
     }
     function getFailureMarkup(failure) {
-      if (!failure) return;
+      if (!failure || (!failure.error && !failure.source)) return;
+      if (!failure.error) failure.error = {};
+      if (!failure.source) failure.source = {};
       core2.debug(`Processing ${failure.error.test}`);
-      return `
-<details>
-  <summary>:x: ${failure.error?.test || failure.source?.name}</summary>
+      return `<details>
+  <summary>:x: ${failure.error.test || failure.source.name}</summary>
   <table>
-    ${getTableEntry('Error Type:', [failure.error?.name, 'code'])}
-    ${getTableEntry('Timestamp:', [failure.error?.timestamp, 'code'])}
-    ${getTableEntry('Source name:', [failure.source?.name, 'code'])}
-    ${getTableEntry('Path:', [failure.source?.request?.url?.path?.join('/'), 'code'])}
-    ${getTableEntry('Stack:', [failure.error?.stack, 'pre'])}
+    ${getRowWithTwoColumns('Error Type:', failure.error.name)}
+    ${getRowWithTwoColumns('Timestamp:', failure.error.timestamp)}
+    ${getRowWithTwoColumns('Source name:', failure.source.name)}
+    ${getRowWithTwoColumns('Path:', failure.source.request?.url?.path?.join('/'))}
+    ${getRowWithTwoColumns('Stack:', failure.error.stack, 'pre')}
   </table>
 </details>
-  `.trim();
+`;
     }
     module2.exports = {
       getMarkupForJson: getMarkupForJson2
@@ -20073,7 +20121,7 @@ ${getTestResultsMarkup(jsonResults.failures, reportName2)}
 
 // src/main.js
 var core = require_core();
-var { readJsonResultsFromFile } = require_utils2();
+var { readJsonResultsFromFile, areThereAnyFailingTests, createResultsFile } = require_utils2();
 var { createStatusCheck, createPrComment } = require_github2();
 var { getMarkupForJson } = require_markup();
 var requiredArgOptions = {
@@ -20087,6 +20135,8 @@ var shouldCreateStatusCheck = core.getBooleanInput('create-status-check');
 var shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
 var updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 var reportName = core.getInput('report-name');
+var jobAndStep = `${process.env.GITHUB_JOB}_${process.env.GITHUB_ACTION}`;
+var commentIdentifier = core.getInput('comment-identifier') || jobAndStep;
 async function run() {
   try {
     const resultsJson = await readJsonResultsFromFile(resultsFile);
@@ -20094,28 +20144,51 @@ async function run() {
       core.setOutput('test-outcome', 'Failed');
       return;
     }
+    const failingTestsFound = areThereAnyFailingTests(resultsJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     const markupData = getMarkupForJson(resultsJson, reportName);
-    let conclusion = 'success';
-    if (resultsJson.hasFailures) {
-      core.warning(`At least one failure was found.`);
-      conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-    } else {
-      core.info(`There are no failures.`);
-    }
     if (shouldCreateStatusCheck) {
-      await createStatusCheck(token, markupData, conclusion, reportName);
+      let conclusion = 'success';
+      if (failingTestsFound) {
+        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+      }
+      const checkId = await createStatusCheck(token, markupData, conclusion, reportName);
+      core.setOutput('status-check-id', checkId);
     }
     if (shouldCreatePRComment) {
-      await createPrComment(token, markupData, updateCommentIfOneExists);
+      core.info(`
+Creating a PR comment with length ${markupData.length}...`);
+      const characterLimit = 65535;
+      let truncated = false;
+      let mdForComment = markupData;
+      if (mdForComment.length > characterLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${mdForComment.length}/${characterLimit}`;
+        core.info(message);
+        truncated = true;
+        const truncatedMessage = `> [!Important]
+> Test results truncated due to character limit.  See full report in output.
+`;
+        mdForComment = `${truncatedMessage}
+${mdForComment.substring(0, characterLimit - 100)}`;
+        fs.writeFile('truncate-truncated-markdown.md', mdForComment, err => {
+          if (err) {
+            core.info(`Error writing results to file. Error: ${err}`);
+          }
+        });
+      }
+      core.setOutput('test-results-truncated', truncated);
+      const commentId = await createPrComment(token, mdForComment, updateCommentIfOneExists, commentIdentifier);
+      core.setOutput('pr-comment-id', commentId);
     }
-    core.setOutput('test-outcome', resultsJson.outcome);
+    const resultsFilePath = createResultsFile(markupData, jobAndStep);
+    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     if (error instanceof RangeError) {
       core.info(error.message);
       core.setOutput('test-outcome', 'Failed');
       return;
     } else {
-      core.setFailed(`An error occurred processing the cypress results file: ${error.message}`);
+      core.setFailed(`An error occurred processing the postman results file: ${error.message}`);
       core.setOutput('test-outcome', 'Failed');
     }
   }

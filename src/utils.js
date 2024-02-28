@@ -33,21 +33,62 @@ async function readJsonResultsFromFile(resultsFile) {
         `The results file '${resultsFile} does not appear to be in the correct format.  No status check or PR comment will be created.`
       );
       return;
-    } else {
-      return {
-        stats: parsedJson.run.stats,
-        timings: parsedJson.run.timings,
-        failures: parsedJson.run.failures,
-        hasFailures: parsedJson.run.failures.length > 0,
-        outcome: parsedJson.run.failures.length > 0 ? 'Failed' : 'Passed'
-      };
     }
+
+    const emptyStat = {
+      total: 0,
+      pending: 0,
+      failed: 0
+    };
+    if (!parsedJson.run.stats.iterations) parsedJson.run.stats.iterations = emptyStat;
+    if (!parsedJson.run.stats.requests) parsedJson.run.stats.requests = emptyStat;
+    if (!parsedJson.run.stats.testScripts) parsedJson.run.stats.testScripts = emptyStat;
+    if (!parsedJson.run.stats.prerequestScripts) parsedJson.run.stats.prerequestScripts = emptyStat;
+    if (!parsedJson.run.stats.assertions) parsedJson.run.stats.assertions = emptyStat;
+
+    return {
+      stats: parsedJson.run.stats,
+      timings: parsedJson.run.timings,
+      failures: parsedJson.run.failures
+    };
   } else {
     core.setFailed(`The results file '${resultsFile}' does not exist.  No status check or PR comment will be created.`);
     return;
   }
 }
 
+function areThereAnyFailingTests(json) {
+  core.info(`\nChecking for failing tests..`);
+
+  if (json.hasFailures) {
+    core.warning(`At least one failing test was found.`);
+    return true;
+  }
+
+  core.info(`There are no failing tests.`);
+  return false;
+}
+
+function createResultsFile(results, jobAndStep) {
+  const resultsFileName = `test-results-${jobAndStep}.md`;
+
+  core.info(`\nWriting results to ${resultsFileName}`);
+  let resultsFilePath = null;
+
+  fs.writeFile(resultsFileName, results, err => {
+    if (err) {
+      core.info(`Error writing results to file. Error: ${err}`);
+    } else {
+      core.info('Successfully created results file.');
+      core.info(`File: ${resultsFileName}`);
+    }
+  });
+  resultsFilePath = path.resolve(resultsFileName);
+  return resultsFilePath;
+}
+
 module.exports = {
-  readJsonResultsFromFile
+  readJsonResultsFromFile,
+  areThereAnyFailingTests,
+  createResultsFile
 };
