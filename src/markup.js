@@ -4,14 +4,13 @@ const timezone = core.getInput('timezone') || 'Etc/UTC';
 const formatDistance = require('date-fns/formatDistance');
 
 function getMarkupForJson(jsonResults, reportName) {
-  return `
-# ${reportName}
+  return `# ${reportName}
+
 ${getBadge(jsonResults.stats.requests, 'Requests')}
 ${getBadge(jsonResults.stats.assertions, 'Assertions')}
 ${getTestTimes(jsonResults.timings)}
 ${getTestCounters(jsonResults)}
-${getTestResultsMarkup(jsonResults.failures, reportName)}
-  `;
+${getFailedAndEmptyTestResultsMarkup(jsonResults.failures, reportName)}`;
 }
 
 function getBadge(stats, name) {
@@ -35,24 +34,20 @@ function formatDate(dateToFormat) {
   }
 }
 
-function getEntryValue(value) {
-  let valueArray = Array.isArray(value) ? value : [value];
-  const [val, wrapper] = valueArray;
-  if (!val) return '';
-
-  return wrapper ? `<${wrapper}>${val}</${wrapper}>` : val;
+function getRowWithTwoColumns(title, value, wrapper) {
+  if (!wrapper) wrapper = 'code';
+  return `<tr>
+      <th>${title}</th>
+      <td><${wrapper}>${value || 'N/A'}</${wrapper}></td>
+    </tr>`;
 }
 
-function getTableEntry(title, ...values) {
-  const tableValues = values.map(getEntryValue);
-  if (!tableValues.some(val => val)) return '';
-
-  return `
-<tr>
-  <th>${title}</th>
-  ${tableValues.map(val => `<td>${val}</td>`).join('')}
-</tr>
-`;
+function getRowWithThreeColumns(title, value1, value2) {
+  return `<tr>
+      <th>${title}</th>
+      <td>${value1 || 0}</td>
+      <td>${value2 || 0}</td>
+    </tr>`;
 }
 
 function getTestTimes(timings) {
@@ -62,44 +57,41 @@ function getTestTimes(timings) {
     includeSeconds: true
   });
 
-  return `
-<details>
-  <summary> Duration: ${duration} </summary>
+  return `<details>
+  <summary>Duration: ${duration}</summary>
   <table>
-    ${getTableEntry('Start:', [formatDate(startDate), 'code'])}
-    ${getTableEntry('Finish:', [formatDate(endDate), 'code'])}
-    ${getTableEntry('Duration:', [`${(timings.completed - timings.started) / 1000}`, 'code'])}
-    ${getTableEntry('Response Time Average:', [timings?.responseAverage, 'code'])}
-    ${getTableEntry('Response Time Min:', [timings?.responseMin, 'code'])}
-    ${getTableEntry('Response Time Max:', [timings?.responseMax, 'code'])}
+    ${getRowWithTwoColumns('Start:', formatDate(startDate))}
+    ${getRowWithTwoColumns('Finish:', formatDate(endDate))}
+    ${getRowWithTwoColumns('Duration:', (timings.completed - timings.started) / 1000)}
+    ${getRowWithTwoColumns('Response Time Average:', timings.responseAverage)}
+    ${getRowWithTwoColumns('Response Time Min:', timings.responseMin)}
+    ${getRowWithTwoColumns('Response Time Max:', timings.responseMax)}
   </table>
-</details>
-  `;
+</details>`;
 }
 
 function getTestCounters(run) {
-  let stats = run.stats;
-  return `
-<details>
-  <summary> Outcome: ${run.outcome}</summary>
+  const outcome = run.failures.length > 0 ? 'Failed' : 'Passed';
+  const stats = run.stats;
+
+  return `<details>
+  <summary>Outcome: ${outcome}</summary>
   <table>
     <tr>
       <th></th>
       <th>executed</th>
-      <td>failed</td>
+      <th>failed</th>
     </tr>
-    ${getTableEntry('iterations', stats?.iterations?.total, stats?.iterations?.failed)}
-    ${getTableEntry('requests', stats?.requests?.total, stats?.requests?.failed)}
-    ${getTableEntry('test-scripts', stats?.testScripts?.total, stats?.testScripts?.failed)}
-    ${getTableEntry('prerequest-scripts', stats?.prerequestScripts?.total, stats?.prerequestScripts?.failed)}
-    ${getTableEntry('assertions', stats?.assertions?.total, stats?.assertions?.failed)}
+    ${getRowWithThreeColumns('iterations', stats.iterations.total, stats.iterations.failed)}
+    ${getRowWithThreeColumns('requests', stats.requests.total, stats.requests.failed)}
+    ${getRowWithThreeColumns('test-scripts', stats.testScripts.total, stats.testScripts.failed)}
+    ${getRowWithThreeColumns('prerequest-scripts', stats.prerequestScripts.total, stats.prerequestScripts.failed)}
+    ${getRowWithThreeColumns('assertions', stats.assertions.total, stats.assertions.failed)}
   </table>
-</details>
-
-  `;
+</details>`;
 }
 
-function getTestResultsMarkup(failures, reportName) {
+function getFailedAndEmptyTestResultsMarkup(failures, reportName) {
   let resultsMarkup = '';
 
   if (!failures || failures.length === 0) {
@@ -108,36 +100,39 @@ function getTestResultsMarkup(failures, reportName) {
     failures.forEach(failure => {
       resultsMarkup += getFailureMarkup(failure);
     });
-    return resultsMarkup.trim();
+    return resultsMarkup;
   }
 }
 
 function getNoResultsMarkup(reportName) {
   const testResultIcon = ':grey_question:';
   const resultsMarkup = `
-  ## ${testResultIcon} ${reportName}
-  There were no failures to report.
-  `;
+## ${testResultIcon} ${reportName}
+
+There were no failures to report.
+`;
   return resultsMarkup;
 }
 
 function getFailureMarkup(failure) {
-  if (!failure) return;
+  if (!failure || (!failure.error && !failure.source)) return;
+
+  if (!failure.error) failure.error = {};
+  if (!failure.source) failure.source = {};
 
   core.debug(`Processing ${failure.error.test}`);
 
-  return `
-<details>
-  <summary>:x: ${failure.error?.test || failure.source?.name}</summary>
+  return `<details>
+  <summary>:x: ${failure.error.test || failure.source.name}</summary>
   <table>
-    ${getTableEntry('Error Type:', [failure.error?.name, 'code'])}
-    ${getTableEntry('Timestamp:', [failure.error?.timestamp, 'code'])}
-    ${getTableEntry('Source name:', [failure.source?.name, 'code'])}
-    ${getTableEntry('Path:', [failure.source?.request?.url?.path?.join('/'), 'code'])}
-    ${getTableEntry('Stack:', [failure.error?.stack, 'pre'])}
+    ${getRowWithTwoColumns('Error Type:', failure.error.name)}
+    ${getRowWithTwoColumns('Timestamp:', failure.error.timestamp)}
+    ${getRowWithTwoColumns('Source name:', failure.source.name)}
+    ${getRowWithTwoColumns('Path:', failure.source.request?.url?.path?.join('/'))}
+    ${getRowWithTwoColumns('Stack:', failure.error.stack, 'pre')}
   </table>
 </details>
-  `.trim();
+`;
 }
 
 module.exports = {
